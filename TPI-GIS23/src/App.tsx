@@ -83,15 +83,26 @@ export default function Layers(): JSX.Element {
 
     return `${topLeft}, ${topRight}, ${bottomLeft}, ${bottomRight}`;
   }
-  const coordsToString = (coords: number[]) =>
-  `${coords[1].toFixed(3)}:${coords[0].toFixed(3)}`;
+  // const coordsToString = (coords: number[]) =>
+  // `${coords[1].toFixed(3)}:${coords[0].toFixed(3)}`;
 
-  const [layerActual, setLayerActual] = useState<string | null>(null);
+  // const [layerActual, setLayerActual] = useState<string | null>(null);
 
-  const handleLayerChange = (selectedLayer: string) => {
-    setLayerActual(selectedLayer);
+  const [selectedLayers, setSelectedLayers] = useState<string[]>([]);
+  const handleLayerChange = (selectedLayer: string): void => {
+    // Toggle la capa seleccionada (agrega o elimina de la lista)
+    setSelectedLayers((prevSelectedLayers) => {
+      const isSelected = prevSelectedLayers.includes(selectedLayer);
+      if (isSelected) {
+        // Si ya estaba seleccionada, la eliminamos
+        return prevSelectedLayers.filter((layer) => layer !== selectedLayer);
+      } else {
+        // Si no estaba seleccionada, la agregamos
+        return [...prevSelectedLayers, selectedLayer];
+      }
+    });
   };
-
+  
 
   var startDragBox: Coordinate
 
@@ -119,41 +130,11 @@ export default function Layers(): JSX.Element {
                  properties={{ label: "yis" }}
                  url='http://localhost/cgi-bin/qgis_mapserv.fcgi?map=/usr/local/share/qgis/tpigis.qgz'
                  params={{
-                   LAYERS: layerActual,
+                   LAYERS: selectedLayers,
                    FORMAT: "image/png",
                    serverType: "mapserver",
                  }}
                />
-        {/* <RControl.RLayers element={layersButton} >
-          {layers.map((layer) => (
-            <RLayerTileWMS properties={{label:layer.layer}} 
-              url='http://localhost/cgi-bin/qgis_mapserv.fcgi?map=/usr/local/share/qgis/tpigis.qgz'
-              
-              params={{
-                LAYERS: layer.label,
-                FORMAT: "image/png",
-                serverType: "mapserver",
-              }}
-              onTileLoadStart={() => handleLayerChange(layer.label)}
-              />
-              
-              ))}
-        </RControl.RLayers> */}
-       
-
-         {/* <RLayerWMS properties={{label:"Ni idea" }}
-                url='http://localhost/cgi-bin/qgis_mapserv.fcgi?map=/usr/local/share/qgis/tpigis.qgz'
-                
-                params={{
-                  SERVICE: 'WMS',
-                  REQUEST: 'GetLegendGraphic',
-                  LAYERS: layerActual,
-                  FORMAT: "image/png",
-                  SCALE: 0,
-                  serverType: "mapserver",
-                }}
-                />
-             */}
 
       <RLayerVector>
         <RStyle.RStyle>
@@ -172,40 +153,54 @@ export default function Layers(): JSX.Element {
 
         <RScaleLine></RScaleLine>
       </RMap>
-      <div className='bg-gray-500 p-3 rounded-md text-white' style={{ height: '100vh' }}>
-      <h6 className='mb-3 bg-slate-600 rounded-md p-2'>
-        Capas disponibles:
-      </h6>
-      <div className='overflow-auto sm:h-60 h-40' style={{ height: '60vh', overflowY: 'auto' }}>
-        {layers.map((layer) => (
-          <div key={layer.label}>
-            <input
-              type='radio'
-              id={layer.label}
-              name='layerGroup'
-              className='form-radio h-5 w-5 text-blue-600 accent-slate-800 cursor-pointer'
-              checked={layer.label === layerActual}
-              onChange={() => handleLayerChange(layer.label)}
-            />
-            <label htmlFor={layer.label}>{layer.layer}</label>
-          </div>
-        ))}
+      <div
+        className="bg-gray-500 p-3 rounded-md text-white"
+        style={{
+          width: '20vw', // Ancho fijo para evitar cambios al agregar leyendas
+        }}
+      >
+        <div className="mt-3" 
+        style={{
+          height: '50vh',
+          overflowY: 'auto',
+          width: '20vw', // Ancho fijo para evitar cambios al agregar leyendas
+        }}>
+        <h6 className="mb-3 bg-slate-600 rounded-md p-2">Capas disponibles:</h6>
+          {layers.map((layer) => (
+            <div key={layer.label}>
+              <input
+                type="checkbox"
+                id={layer.label}
+                className="form-checkbox h-5 w-5 text-blue-600 accent-slate-800 cursor-pointer"
+                checked={selectedLayers.includes(layer.label)}
+                onChange={() => handleLayerChange(layer.label)}
+              />
+              <label htmlFor={layer.label}>{layer.layer}</label>
+            </div>
+          ))}
+        </div>
+        
+        <div
+        style={{
+          
+          borderTop: '1px solid Black',
+          height: '49vh',
+          overflowY: 'auto',
+          width: '20vw', // Ancho fijo para evitar cambios al agregar leyendas
+        }}>
+          {selectedLayers.map((selectedLayer) => (
+             <div key={selectedLayer} style={{ marginBottom: '10px' }}>
+             <img
+               src={`http://localhost/cgi-bin/qgis_mapserv.fcgi?map=/usr/local/share/qgis/tpigis.qgz&SERVICE=WMS&REQUEST=GetLegendGraphic&LAYER=${selectedLayer}&FORMAT=image/png`}
+               alt={`Legend for ${selectedLayer}`}
+             />
+           </div>
+          ))}
+        </div>
       </div>
-    <div className='mt-3'>
-    {layerActual && (
-      <img
-        src={`http://localhost/cgi-bin/qgis_mapserv.fcgi?map=/usr/local/share/qgis/tpigis.qgz&SERVICE=WMS&REQUEST=GetLegendGraphic&LAYER=${layerActual}&FORMAT=image/png`}
-        alt={`Legend for ${layerActual}`}
-      />
-    )}
-  </div>
-    </div>
     </div>
   )
 }
 
-
 // export default App
-
-
 
