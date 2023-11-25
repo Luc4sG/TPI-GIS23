@@ -15,7 +15,7 @@ import './App.css'
 import { RScaleLine } from "rlayers/control";
 import { shiftKeyOnly } from 'ol/events/condition';
 import { Coordinate } from 'ol/coordinate';
-
+import getIntersectedFeatures from '../service/api.ts';
 
 // const layersButton = <button>&#9776;</button>;
 export default function Layers(): JSX.Element {
@@ -68,7 +68,7 @@ export default function Layers(): JSX.Element {
     { label: 'veg_suelo_desnudo', layer: 'Vegetación Suelo Desnudo' },
     { label: 'vias_secundarias', layer: 'Vias Secundarias' }
   ];
-  function calcularVerticesDiagonales(coord1: any[], coord2: any[]) {
+  function calcularVerticesDiagonales(coord1: any[], coord2: any[]): any[][] {
     // Coord1 y Coord2 son las coordenadas diagonales opuestas
     const x1 = coord1[0];
     const y1 = coord1[1];
@@ -76,12 +76,12 @@ export default function Layers(): JSX.Element {
     const y2 = coord2[1];
   
     // Calcular las coordenadas de los vértices restantes
-    const topLeft = `${x1} ${y2}`;
-    const topRight = `${x2} ${y2}`;
-    const bottomLeft = `${x1} ${y1}`;
-    const bottomRight = `${x2} ${y1}`;
-
-    return `${topLeft}, ${topRight}, ${bottomLeft}, ${bottomRight}`;
+    const topLeft = [x1, y2];
+    const topRight = [x2, y2];
+    const bottomLeft = [x1, y1];
+    const bottomRight = [x2, y1];
+  
+    return Array.from([topLeft, topRight, bottomLeft, bottomRight]);
   }
   // const coordsToString = (coords: number[]) =>
   // `${coords[1].toFixed(3)}:${coords[0].toFixed(3)}`;
@@ -146,7 +146,7 @@ export default function Layers(): JSX.Element {
         <RInteraction.RDragBox
           condition={shiftKeyOnly}
           onBoxStart={(event) => startDragBox = event.coordinate}
-          onBoxEnd={(event) => console.log( calcularVerticesDiagonales(toLonLat(startDragBox) ,toLonLat(event.coordinate)))} //coordsToString(toLonLat(event.coordinate)
+          onBoxEnd={(event) => getIntersectedFeatures(selectedLayers, calcularVerticesDiagonales(toLonLat(startDragBox) ,toLonLat(event.coordinate)))} //coordsToString(toLonLat(event.coordinate)
         />
       </RLayerVector>
 
