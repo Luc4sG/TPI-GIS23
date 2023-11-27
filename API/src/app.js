@@ -126,7 +126,9 @@ const database = 'sigign';
 //     });
 
 app.post('/intersect', async (req, res) => {
+    console.log(req.body);
     const { layers, coords } = req.body;
+    console.log('Layer:', layers);   
     const layersNames = [] = layers.map((layer) => layer.sourceName);
     let wkt = ''
     if (coords.length == 2) {
@@ -150,9 +152,9 @@ app.post('/intersect', async (req, res) => {
     let result = {}
     try {            
         await client.query('BEGIN');
-        await Promise.all(layersNames.map(async (layer) => {    
-            const initialQuery =  'SELECT *, ST_AsGeoJSON("'+ layer + '".geom) as features FROM '+ '"'+ layer +'"';
-            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 50';
+        await Promise.all(layersNames.map(async (layer) => { 
+            const initialQuery =  'SELECT *, ST_AsGeoJSON("ejido".geom) as features FROM '+ '"ejido"';
+            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "ejido".geom) LIMIT 50';
             console.log(query);
             const {rows} = await client.query(query);
             const features = rows?.map((row) => {
