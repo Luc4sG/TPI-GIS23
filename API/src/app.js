@@ -23,8 +23,93 @@ const host = 'localhost';
 const port = 5432;
 const database = 'sigign';
 
+function generateWKT(coords) {
+    let wkt;
+
+    if (coords.length === 2) {
+        wkt = 'POINT(' + coords[0] + ' ' + coords[1] + ')';
+    } else {
+        wkt = 'POLYGON((';
+        for (let i = 0; i < coords.length; i++) {
+            wkt += coords[i][0] + ' ' + coords[i][1];
+            if (i !== coords.length - 1) {
+                wkt += ', ';
+            } else {
+                wkt += ', ' + coords[0][0] + ' ' + coords[0][1]; // Agregar el primer punto al final para cerrar el polígono
+            }
+        }
+        wkt += '))';
+    }
+
+    return wkt;
+}
 
 
+app.post('/intersect', async (req, res) => {
+    console.log(req.body);
+    const { Layer, coords } = req.body;
+    console.log('Layer:', Layer);   
+    const layersNames = [] = Layer.map((layer) => layer.sourceName);
+    const wkt = generateWKT(coords);
+    // if (coords.length == 2) {
+    //     wkt = 'POINT(' + coords[0] + ' ' + coords[1] + ')';
+    // } else {
+    //     wkt = 'POLYGON((';
+    //     for (var i = 0; i < coords[0].length - 1; i++) {
+    //         wkt += coords[0][i][0] + ' ' + coords[0][i][1] + ',';
+    //     }
+    //     wkt += coords[0][0][0] + ' ' + coords[0][0][1] + '))'
+    // }
+    console.log(wkt);
+    if (layersNames.length>0){
+    const pool = new Pool({ 
+        user
+        , host
+        , database
+        , password
+        , port
+    })
+    const client = await pool.connect();
+    let result = {}
+    try {            
+        await client.query('BEGIN');
+        await Promise.all(layersNames.map(async (layer) => { 
+            const initialQuery =  'SELECT *, ST_AsGeoJSON("'+ layer + '".geom) as features FROM '+ '"'+ layer +'"';
+            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 1';
+            console.log(query);
+            const {rows} = await client.query(query);
+            const features = rows?.map((row) => {
+                const { features, geometry, ...properties } = row;
+                return {
+                    type: 'Feature',
+                    geometry: {
+                ...JSON.parse(features),
+                    },
+                    properties
+                };
+            });
+            result = { 
+                ...result,
+                [layer]: 
+                {type: 'FeatureCollection', features }
+            };
+        }));
+        console.log(result);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    }
+    finally {
+        client.release();
+    }
+    } else {
+        res.status(200).send({type: 'FeatureCollection', features: [] });
+    }
+});
+
+module.exports = app;
 
 // app.post('/addMarker', async (req, res) => {
 //     console.log(req.body);
@@ -124,68 +209,3 @@ const database = 'sigign';
 //             client.release();
 //         }
 //     });
-
-app.post('/intersect', async (req, res) => {
-    console.log(req.body);
-    const { layers, coords } = req.body;
-    console.log('Layer:', layers);   
-    const layersNames = [] = layers.map((layer) => layer.sourceName);
-    let wkt = ''
-    if (coords.length == 2) {
-        wkt = 'POINT(' + coords[0] + ' ' + coords[1] + ')';
-    } else {
-        wkt = 'POLYGON((';
-        for (var i = 0; i < coords[0].length - 1; i++) {
-            wkt += coords[0][i][0] + ' ' + coords[0][i][1] + ',';
-        }
-        wkt += coords[0][0][0] + ' ' + coords[0][0][1] + '))'
-    }
-    if (layersNames.length>0){
-    const pool = new Pool({ 
-        user
-        , host
-        , database
-        , password
-        , port
-    })
-    const client = await pool.connect();
-    let result = {}
-    try {            
-        await client.query('BEGIN');
-        await Promise.all(layersNames.map(async (layer) => { 
-            const initialQuery =  'SELECT *, ST_AsGeoJSON("ejido".geom) as features FROM '+ '"ejido"';
-            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "ejido".geom) LIMIT 50';
-            console.log(query);
-            const {rows} = await client.query(query);
-            const features = rows?.map((row) => {
-                const { features, geometry, ...properties } = row;
-                return {
-                    type: 'Feature',
-                    geometry: {
-                ...JSON.parse(features),
-                    },
-                    properties
-                };
-            });
-            result = { 
-                ...result,
-                [layer]: 
-                {type: 'FeatureCollection', features }
-            };
-        }));
-        console.log(result);
-        res.status(200).send(result);
-    }
-    catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
-    }
-    finally {
-        client.release();
-    }
-    } else {
-        res.status(200).send({type: 'FeatureCollection', features: [] });
-    }
-});
-
-module.exports = app;

@@ -17,6 +17,11 @@ import { shiftKeyOnly } from 'ol/events/condition';
 import { Coordinate } from 'ol/coordinate';
 import getIntersectedFeatures from '../service/api.ts';
 
+interface Layer {
+  sourceName: string;
+}
+
+
 // const layersButton = <button>&#9776;</button>;
 export default function Layers(): JSX.Element {
 
@@ -102,12 +107,27 @@ export default function Layers(): JSX.Element {
       }
     });
   };
+
+  const testcord = [
+    [-63.6796875, -38.414373789565516],
+    [-58.40625, -38.414373789565516],
+    [-63.6796875, -35.285475652212575],
+    [-58.40625, -35.285475652212575],
+  ];
+  const testlay: Layer[] = [
+    {
+      sourceName: 'ejido',
+    },
+  ];
   
 
   var startDragBox: Coordinate
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
+      {/* haceme un boton que llame al getIntersectedfeauters y le pase testlay y testcord */}
+      {/* <button onClick={() => getIntersectedFeatures(testlay, testcord)}>Test</button> */}
+      
       <RMap
         className="example-map"
         initial={{ center: fromLonLat([-57,-38]), zoom: 5 }}

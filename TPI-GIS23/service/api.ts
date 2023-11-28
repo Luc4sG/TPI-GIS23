@@ -1,9 +1,20 @@
 import axios from 'axios'
 
-const getIntersectedFeatures = async (layers: string[], coords: any[][]) => {
+interface Layer {
+  sourceName: string;
+}
+
+
+
+const getIntersectedFeatures = async (layers: string[],
+  coords: any[][]) => {
   console.log(layers,coords)
+
+  const Layer: Layer[] = layers.map((layer) => {
+    return { sourceName: layer };
+  } );
   const response = await axios.post('http://localhost:3000/intersect', {
-    layers,
+    Layer,
     coords
   },{
     headers: {
