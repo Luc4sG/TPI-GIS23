@@ -59,7 +59,7 @@ app.post('/intersect', async (req, res) => {
     //         wkt += coords[0][i][0] + ' ' + coords[0][i][1] + ',';
     //     }
     //     wkt += coords[0][0][0] + ' ' + coords[0][0][1] + '))'
-    // }
+    // } , ST_AsGeoJSON("'+ layer + '".geom) as features
     console.log(wkt);
     if (layersNames.length>0){
     const pool = new Pool({ 
@@ -74,25 +74,31 @@ app.post('/intersect', async (req, res) => {
     try {            
         await client.query('BEGIN');
         await Promise.all(layersNames.map(async (layer) => { 
-            const initialQuery =  'SELECT *, ST_AsGeoJSON("'+ layer + '".geom) as features FROM '+ '"'+ layer +'"';
-            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 1';
+            const initialQuery =  'SELECT * FROM '+ '"'+ layer +'"';
+            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 2';
             console.log(query);
             const {rows} = await client.query(query);
-            const features = rows?.map((row) => {
-                const { features, geometry, ...properties } = row;
-                return {
-                    type: 'Feature',
-                    geometry: {
-                ...JSON.parse(features),
-                    },
-                    properties
-                };
-            });
-            result = { 
+            console.log(rows);
+            result = {
                 ...result,
-                [layer]: 
-                {type: 'FeatureCollection', features }
-            };
+                [layer]: {rows}
+                
+            }
+            // const features = rows?.map((row) => {
+            //     const { features, geometry, ...properties } = row;
+            //     return {
+            //         type: 'Feature',
+            //         geometry: {
+            //     ...JSON.parse(features),
+            //         },
+            //         properties
+            //     };
+            // });
+            // result = { 
+            //     ...result,
+            //     [layer]: 
+            //     {type: 'FeatureCollection', features }
+            // };
         }));
         console.log(result);
         res.status(200).send(result);

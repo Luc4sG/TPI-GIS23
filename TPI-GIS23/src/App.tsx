@@ -13,17 +13,27 @@ import "ol/ol.css";
 import "rlayers/control/layers.css";
 import './App.css'
 import { RScaleLine } from "rlayers/control";
-import { shiftKeyOnly } from 'ol/events/condition';
+import { altKeyOnly, shiftKeyOnly } from 'ol/events/condition';
 import { Coordinate } from 'ol/coordinate';
 import getIntersectedFeatures from '../service/api.ts';
+import Modal from './components/Modal.tsx';
 
 interface Layer {
   sourceName: string;
 }
 
 
+
 // const layersButton = <button>&#9776;</button>;
 export default function Layers(): JSX.Element {
+
+  //Funciones ModalQuery
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  function toggleModal() {
+      setShowModal(!showModal);
+  }
+
 
   const layers = [
     { label: 'actividades_agropecuarias', layer: 'Actividades Agropecuarias' },
@@ -73,6 +83,8 @@ export default function Layers(): JSX.Element {
     { label: 'veg_suelo_desnudo', layer: 'Vegetación Suelo Desnudo' },
     { label: 'vias_secundarias', layer: 'Vias Secundarias' }
   ];
+
+
   function calcularVerticesDiagonales(coord1: any[], coord2: any[]): any[][] {
     // Coord1 y Coord2 son las coordenadas diagonales opuestas
     const x1 = coord1[0];
@@ -108,18 +120,7 @@ export default function Layers(): JSX.Element {
     });
   };
 
-  const testcord = [
-    [-63.6796875, -38.414373789565516],
-    [-58.40625, -38.414373789565516],
-    [-63.6796875, -35.285475652212575],
-    [-58.40625, -35.285475652212575],
-  ];
-  const testlay: Layer[] = [
-    {
-      sourceName: 'ejido',
-    },
-  ];
-  
+  const test: Object = {"ejido":{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-60.905216217,-38.341388702],[-60.908920288,-38.338977814],[-60.905334473,-38.336181641],[-60.894954681,-38.327892303],[-60.893482208,-38.329143524],[-60.888744354,-38.325035095],[-60.886806488,-38.326076508],[-60.880775452,-38.320487976],[-60.87733078,-38.322219849],[-60.87820816,-38.323272705],[-60.868267059,-38.327655792],[-60.874118805,-38.332233429],[-60.873767853,-38.332489014],[-60.877819061,-38.335704803],[-60.877933502,-38.33562851],[-60.881858826,-38.339130402],[-60.88363266,-38.337665558],[-60.886329651,-38.340419769],[-60.8957901,-38.333591461],[-60.901573181,-38.338405609],[-60.905216217,-38.341388702]]]]},"properties":{"gid":1879,"nombre":"Indio Rico","tipo":"Localidad","precisión":"Definido","esc":"Mapas Mayor e Igual a 1:1000000","signo":73004,"departamen":"Coronel Pringles","provincia":null,"fuente":"IGN","operador":"Moreno","dataset":"Localidad","fclass":"Ejido","responsabl":"Sergio Cimbaro","cargo":"Dir. Gral. Serv. Geográfico","progreso":null,"t_act":null,"coord":null,"sp":"Posgar94","datum":"WGS 84","ac":"2010","actualizac":"20101126","igds_style":0,"igds_type":0,"igds_weigh":0,"igds_color":0,"igds_level":0,"length":"0.105456119394201","shape_area":"0.000344372209606","rotation":"0.000000000000000","group":0,"coddepto":null,"codloc":null,"geom":"0106000020E6100000010000000103000000010000001500000068E9FF1FDE734EC02028FF9FB22B43C0B8D0FF7F57744EC0809900A0632B43C0F0BC0000E2734EC020CE0000082B43C00026FFDF8D724EC058FFFE5FF82943C07075FF9F5D724EC088A2FF5F212A43C09877FF5FC2714EC0D889FFBF9A2943C090EBFFDF82714EC040ED00E0BC2943C0C8BA0040BD704EC028D7FFBF052943C0D8EFFF5F4C704EC0D0C900803E2943C0D823FF1F69704EC000D5FFFF602943C0A84CFF5F236F4EC0087EFF9FF02943C088250020E36F4EC0A81800A0862A43C0287700A0D76F4EC058B400008F2A43C06866FF5F5C704EC058FFFE5FF82A43C08093FF1F60704EC0080701E0F52A43C0E8AD00C0E0704EC0A0D500A0682B43C0483000E01A714EC0304C00A0382B43C08842004073714EC02062FFDF922B43C048CAFF3FA9724EC0189CFF1FB32A43C038ACFFBF66734EC008B8FFDF502B43C068E9FF1FDE734EC02028FF9FB22B43C0"}}]}}
 
   var startDragBox: Coordinate
 
@@ -127,6 +128,12 @@ export default function Layers(): JSX.Element {
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       {/* haceme un boton que llame al getIntersectedfeauters y le pase testlay y testcord */}
       {/* <button onClick={() => getIntersectedFeatures(testlay, testcord)}>Test</button> */}
+
+      <div className="card">
+                <span>Toggle Card</span>
+                <button type="button" className="btn" onClick={toggleModal}>Open</button>
+      </div>
+      
       
       <RMap
         className="example-map"
@@ -168,11 +175,17 @@ export default function Layers(): JSX.Element {
           onBoxStart={(event) => startDragBox = event.coordinate}
           onBoxEnd={(event) => getIntersectedFeatures(selectedLayers, calcularVerticesDiagonales(toLonLat(startDragBox) ,toLonLat(event.coordinate)))} //coordsToString(toLonLat(event.coordinate)
         />
+        <RInteraction.RDraw
+            type={"Point"}
+            condition={altKeyOnly}
+          />
       </RLayerVector>
 
 
         <RScaleLine></RScaleLine>
       </RMap>
+      <Modal open={showModal} onClose={toggleModal} consultLayer={test}/>
+          
       <div
         className="bg-gray-500 p-3 rounded-md text-white"
         style={{
