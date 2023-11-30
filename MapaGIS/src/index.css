@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -65,4 +69,25 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  background-color: rgb(198, 198, 244);
+}
+th, td {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+th {
+  background-color: #21006d;
+  color: white;
+  text
+
+}
+tr:nth-child(even) {
+  background-color: #dedcf9;
 }

@@ -75,7 +75,7 @@ app.post('/intersect', async (req, res) => {
         await client.query('BEGIN');
         await Promise.all(layersNames.map(async (layer) => { 
             const initialQuery =  'SELECT * FROM '+ '"'+ layer +'"';
-            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 2';
+            const query = initialQuery + ' WHERE ST_Intersects(ST_GeomFromText(\'' + wkt + '\', 4326), "' + layer+'".geom) LIMIT 5';
             console.log(query);
             const {rows} = await client.query(query);
             console.log(rows);
@@ -117,33 +117,33 @@ app.post('/intersect', async (req, res) => {
 
 module.exports = app;
 
-// app.post('/addMarker', async (req, res) => {
-//     console.log(req.body);
-//     const {name, description} = req.body.properties;
-//     const {coordinates} = req.body.geometry;
-//     const pool = new Pool({
-//         user: user,
-//         password: password,
-//         host: host,
-//         port: port,
-//         database: database
-//     });
-//     const client = await pool.connect();
-//     try {
-//         await client.query('BEGIN');
-//         const queryText = 'INSERT INTO "Marcadores" ("Nombre", "Descripcion", geometry) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)) RETURNING *';
-//         const values = [name, description, coordinates[0], coordinates[1]];
-//         const {rows} = await client
-//             .query(queryText, values);
-//         await client.query('COMMIT');
-//         res.status(201).send(rows[0]);
-//     } catch (e) {
-//         await client.query('ROLLBACK');
-//         throw e;
-//     } finally {
-//         client.release();
-//     }
-// });
+app.post('/addMarker', async (req, res) => {
+    console.log(req.body);
+    const {name, description} = req.body.properties;
+    const {coordenadas} = req.body.geometry.coordinates;
+    const pool = new Pool({
+        user: user,
+        password: password,
+        host: host,
+        port: port,
+        database: database
+    });
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const queryText = 'INSERT INTO "Marcadores" ("nombre", "descripcion", geom) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326)) RETURNING *';
+        const values = [name, description, coordenadas[0], coordenadas[1]];
+        const {rows} = await client
+            .query(queryText, values);
+        await client.query('COMMIT');
+        res.status(201).send(rows[0]);
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+});
 
 // app.post('/removeMarkers', async (req, res) => {
 //     const { coords } = req.body;
